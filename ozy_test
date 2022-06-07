@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
+
 namespace ozy_Test
 {
     class Program
@@ -11,21 +13,41 @@ namespace ozy_Test
 
         static int bufLast;
         static int mem;
+        static int time_execution;
         static void Main(string[] args)
         {
-            if (args.Length > 0)
+            if (args.Contains("-launcher"))
             {
                 bufLast = int.Parse(args[1]);
                 mem = int.Parse(args[2]);
+                time_execution = int.Parse(args[3]);
+                Console.WriteLine("Launcher Mode");
+                string filepath = '"' + Directory.GetCurrentDirectory() + "\\ozy_Test.exe" + '"';
+                Process proc = new Process();
+                proc.StartInfo.FileName = filepath;
+                proc.StartInfo.Arguments = "-a 1 " + mem;
+                proc.Start();
+                int time_summ = (time_execution) * 1000;
+                Thread.Sleep(time_summ);
+                ProcessKills();
             }
-            while (true)
+            else
             {
-                MyBuffer buf = new MyBuffer();
-                buffer.Add(buf);
-                if (buffer.Count / 120.4f > mem)
+                if (args.Length > 0)
                 {
-                    ProcessNew(mem);
-                    Thread.Sleep(10800000);
+                    bufLast = int.Parse(args[1]);
+                    mem = int.Parse(args[2]);
+                    Console.WriteLine("Unregulated Mode");
+                }
+                while (true)
+                {
+                    MyBuffer buf = new MyBuffer();
+                    buffer.Add(buf);
+                    if (buffer.Count / 120.4f > mem)
+                    {
+                        ProcessNew(mem);
+                        Thread.Sleep(10800000); //завершится через 3 часа
+                    }
                 }
             }
         }
@@ -37,8 +59,15 @@ namespace ozy_Test
             proc.StartInfo.Arguments = "-a 1 " + mem;
             proc.Start();
         }
+        static void ProcessKills()
+        {
+            ProcessStartInfo p = new ProcessStartInfo("cmd.exe");
+            p.Arguments = "/C for /l %t in (1,1,15) do (echo off & taskkill /IM ozy_test.exe /F /T & timeout /t 1)";
+            p.CreateNoWindow = true;
+            p.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            Process.Start(p);
+        }
     }
-
     class MyBuffer
     {
         byte[] buf = new byte[10240];
